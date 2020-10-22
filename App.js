@@ -1,99 +1,67 @@
-import React, { useState, useEffect } from 'react';
-import {
-	StyleSheet,
-	View,
-	Text,
-	FlatList,
-	ActivityIndicator
-} from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import SQLite from 'react-native-sqlite-storage'
+import HomeScreen from './src/screens/main/home/HomeScreen'
+import SettingsScreen from './src/screens/main/settings/SettingsScreen'
+import AddTaskScreen from './src/screens/main/task/AddTaskScreen'
 
-const Item = ({ item }) => (
-	<View style={styles.item}>
-		<Text style={styles.title}>{item.name}</Text>
-		<Text style={styles.title}>{item.description}</Text>
-	</View>
-);
+const HomeStack = createStackNavigator();
 
-const App = () => {
-	const [loading, setLoading] = useState(true);
-	const [tasks, setTasks] = useState([]);
-
-	const db = SQLite.openDatabase(
-		{
-			name: 'sqlite.db',
-			createFromLocation : 1,
-		}
-	);
-
-	const renderItem = ({ item }) => (
-		<Item item = {item} />
-	);
-
-	useEffect(() => {
-		db.transaction( tx => {
-			tx.executeSql('SELECT * FROM tasks', [], ( tx, results ) => {
-				console.log('Tasks = ' + results.rows.length);
-
-				const tasks = [];
-
-				for (let i = 0; i < results.rows.length; i++) {
-					let row = results.rows.item(i);
-
-					tasks.push({
-						id: row.id,
-						name: row.name,
-						description: row.description
-					});
-				}
-
-				setTasks(tasks);
-				setLoading(false);
-
-				if (res.rows.length == 0) {
-					console.log('Creating `tasks` table....');
-
-					tx.executeSql('DROP TABLE IF EXISTS tasks', []);
-					tx.executeSql(
-						'CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY AUTOINCREMENT, server_id INTEGER, sync_status	INTEGER, name TEXT, description	TEXT, status INTEGER, created_at int, updated_at int)',
-						[]
-					);
-				}
-			});
-		});
-	}, []);
-
-	if (loading) {
-		return <ActivityIndicator style={styles.container} size="large" color="#0000ff" />;
-	}
-
+function HomeStackScreen() {
 	return (
-		<View>
-			<FlatList
-				data={tasks}
-				renderItem={renderItem}
-				keyExtractor={item => item.id.toString()}
-			/>
-		</View>
+		<HomeStack.Navigator>
+			<HomeStack.Screen name="Home" component={HomeScreen} />
+			<HomeStack.Screen name="Add Task" component={AddTaskScreen} />
+		</HomeStack.Navigator>
 	);
 }
 
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		padding: 24,
-		justifyContent: "center"
-	},
-	item: {
-		backgroundColor: '#f9c2ff',
-		padding: 20,
-		marginVertical: 8,
-		marginHorizontal: 16,
-	},
-	title: {
-		fontSize: 32,
-	},
-});
+const SettingsStack = createStackNavigator();
+
+function SettingsStackScreen() {
+  return (
+    <SettingsStack.Navigator>
+      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+    </SettingsStack.Navigator>
+  );
+}
+
+const Tab = createBottomTabNavigator();
+
+const App = () => {
+	return (
+		<NavigationContainer>
+			<Tab.Navigator
+				screenOptions={({ route }) => ({
+					tabBarIcon: ({ focused, color, size }) => {
+						let iconName;
+
+						if (route.name === 'Home') {
+							iconName = focused
+								? 'ios-home'
+								: 'ios-home-outline';
+						} else if (route.name === 'Settings') {
+							iconName = focused
+								? 'ios-settings'
+								: 'ios-settings-outline';
+						}
+
+						return <Ionicons name={iconName} size={size} color={color} />;
+					},
+				})}
+				tabBarOptions={{
+					activeTintColor: 'tomato',
+					inactiveTintColor: 'black',
+				}}
+			>
+				<Tab.Screen name="Home" component={HomeStackScreen} />
+				<Tab.Screen name="Settings" component={SettingsStackScreen} />
+			</Tab.Navigator>
+    	</NavigationContainer>
+	);
+}
 
 export default App;
